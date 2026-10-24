@@ -180,18 +180,18 @@ class TestAiToolRead(TransactionCase):
         self.assertNotIn("access_token", res["hidden"])
         # A field pointing to a model the user cannot read is left out, so that
         # reading the model does not fail as a whole.
-        self.assertNotIn("model_access", self._get_fields("res.groups")["fields"])
+        self.assertNotIn("access_ids", self._get_fields("res.groups")["fields"])
         group_user = self.env.ref("base.group_user")
         res = self._search_read("res.groups", domain=[("id", "=", group_user.id)])
-        self.assertNotIn("model_access", res["records"][0])
+        self.assertNotIn("access_ids", res["records"][0])
         # A user who may read them gets them.
         res = self._search_read(
             "res.groups",
             user=self.system_user,
             domain=[("id", "=", group_user.id)],
-            fields=["model_access"],
+            fields=["access_ids"],
         )
-        self.assertIn("model_access", res["records"][0])
+        self.assertIn("access_ids", res["records"][0])
 
     def test_refused_field_left_out(self):
         # A computed field can be refused only when it is computed, typically
@@ -199,10 +199,10 @@ class TestAiToolRead(TransactionCase):
         # as which real fields do so depends on the installed modules, and a
         # value already in the cache would not be computed at all.
         def compute_refused(partners):
-            partners.env["ir.model.access"].check_access("read")
+            partners.env["ir.access"].check_access("read")
 
         self.patch(
-            type(self.env["res.partner"]), "_compute_contact_address", compute_refused
+            type(self.env["res.partner"]), "_compute_address", compute_refused
         )
         self.partner.invalidate_recordset(["contact_address"])
         domain = [("id", "=", self.partner.id)]
@@ -233,12 +233,12 @@ class TestAiToolRead(TransactionCase):
         with self.assertRaises(AccessError):
             self._search_read("ir.cron")
         # An abstract model is not listed even when an ACL grants read on it.
-        self.env["ir.model.access"].create(
+        self.env["ir.access"].create(
             {
                 "name": "ai_tool_read_test_access",
                 "model_id": self.env["ir.model"]._get("mail.thread").id,
                 "group_id": self.env.ref("base.group_user").id,
-                "perm_read": True,
+                "operation": "r",
             }
         )
         models = [
