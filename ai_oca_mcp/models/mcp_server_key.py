@@ -4,7 +4,7 @@
 import json
 from hashlib import sha256
 
-from odoo import api, fields, models, tools
+from odoo import api, fields, models
 
 
 class McpServerKey(models.Model):
@@ -28,7 +28,7 @@ class McpServerKey(models.Model):
                 "expired_on": fields.Datetime.now(),
             }
         )
-        self.env.registry.clear_cache()
+        self.env.transaction.invalidate_ormcache()
 
     _key_uniq = models.Constraint("unique (hashed_key)", "The key must be unique")
 
@@ -36,7 +36,7 @@ class McpServerKey(models.Model):
     def _hash_key(self, key):
         return sha256(key.encode()).hexdigest()
 
-    @tools.ormcache("key", "security_key")
+    @api.ormcache("key", "security_key")
     def _get_mcp_server_by_key(self, key, security_key):
         key = self.sudo().search(
             [

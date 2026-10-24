@@ -200,7 +200,7 @@ class TestMcp(HttpCase):
         self.assertIn("structuredContent", response["result"])
         self.assertEqual(response["result"]["structuredContent"]["date"], "2024-01-01")
 
-    @mute_logger("odoo.models", "odoo.addons.base.models.ir_rule")
+    @mute_logger("odoo.models", "odoo.addons.base.models.ir_access")
     def test_internal_user_access(self):
         """A plain internal user can read the key (and its server) it owns,
         but cannot open records for which it has no key of its own."""
@@ -265,7 +265,7 @@ class TestMcp(HttpCase):
         security_key = "plain-user-security-key"
         key.hashed_key = key._hash_key(security_key)
         # Refresh the cached key lookup so the new key is resolvable.
-        self.env.registry.clear_cache()
+        self.env.transaction.invalidate_ormcache()
         return security_key
 
     def test_list_tools_non_admin_user(self):
