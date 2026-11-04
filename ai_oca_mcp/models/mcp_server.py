@@ -36,9 +36,8 @@ class McpServer(models.Model):
 
     @api.depends("key")
     def _compute_url(self):
-        base_url = self.get_base_url()
         for record in self:
-            record.url = f"{base_url}/mcp/{record.key}"
+            record.url = f"{record.get_base_url()}/mcp/{record.key}"
 
     def _get_instructions(self):
         self.ensure_one()
